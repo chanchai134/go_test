@@ -1,4 +1,4 @@
-module simplewebapp
+module github.com/chanchai134/go_test
 
 go 1.19
 
