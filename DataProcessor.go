@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 )
 
 type Result struct {
@@ -21,9 +22,14 @@ type Input struct {
 	Val2 int
 }
 
+var ErrOol4 = fmt.Errorf("input must have 4 lines")
+
 func parser(data []byte) (Input, error) {
 	// parse the data
 	lines := bytes.Split(data, []byte("\n"))
+	if length := len(lines); length != 4 {
+		return Input{}, ErrOol4
+	}
 	// each entry is line 1 id, line 2 operator, line 3 num 1, line 4 num2
 	id := string(lines[0])
 	op := string(lines[1])
@@ -84,7 +90,10 @@ func WriteData(in <-chan Result, w io.Writer) {
 func NewController(out chan []byte) http.Handler {
 	var numSent int
 	var numRejected int
+	var lock sync.Mutex
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		lock.Lock()
+		defer lock.Unlock()
 		numSent++
 		// take in data
 		data, err := io.ReadAll(r.Body)
